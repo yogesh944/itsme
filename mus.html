@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&display=swap');
+        
+        body {
+            font-family: 'Playfair Display', serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #1a0f0f 0%, #2c1810 50%, #1a0f0f 100%);
+            color: #e8d5b5;
+        }
+        .music-player {
+            background: linear-gradient(to bottom, rgba(44, 24, 16, 0.95), rgba(26, 15, 15, 0.95));
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            width: 400px;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 2px solid #8b4513;
+        }
+        .now-playing-image {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.5s ease;
+        }
+        .now-playing-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .now-playing-image img:hover {
+            transform: scale(1.1);
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #8b4513;
+            border-radius: 30px;
+            background: rgba(232, 213, 181, 0.1);
+            color: #e8d5b5;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: 'Playfair Display', serif;
+        }
+        .search-input:focus {
+            outline: none;
+            background: rgba(232, 213, 181, 0.15);
+            box-shadow: 0 0 0 2px rgba(139, 69, 19, 0.5);
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+        }
+        button {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: 2px solid #8b4513;
+            background: linear-gradient(to bottom, rgba(139, 69, 19, 0.1), rgba(139, 69, 19, 0.2));
+            color: #e8d5b5;
+            border-radius: 30px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-family: 'Playfair Display', serif;
+        }
+        button:hover {
+            background: linear-gradient(to bottom, #8b4513, #6b3410);
+            transform: scale(1.05);
+        }
+        #playlist {
+            margin-top: 25px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        #playlist::-webkit-scrollbar {
+            width: 6px;
+        }
+        #playlist::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #8b4513, #6b3410);
+            border-radius: 3px;
+        }
+        .song-item {
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(to right, rgba(232, 213, 181, 0.05), rgba(139, 69, 19, 0.1));
+            transition: all 0.3s ease;
+            border: 1px solid rgba(139, 69, 19, 0.3);
+        }
+        .song-item:hover {
+            background: linear-gradient(to right, rgba(232, 213, 181, 0.1), rgba(139, 69, 19, 0.2));
+            transform: translateX(5px);
+        }
+        .song-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            margin-right: 15px;
+            object-fit: cover;
+            border: 1px solid #8b4513;
+            transition: transform 0.3s ease;
+        }
+        .song-item img:hover {
+            transform: scale(1.1);
+        }
+        .song-info {
+            flex-grow: 1;
+        }
+        .song-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #e8d5b5;
+        }
+        .song-artist {
+            font-size: 12px;
+            color: #b3937a;
+        }
+        #now-playing {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #e8d5b5;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            letter-spacing: 1px;
+        }
+        .album-title {
+            font-size: 24px;
+            text-align: center;
+            margin: 20px 0;
+            color: #e8d5b5;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid #8b4513;
+            padding-bottom: 10px;
+            background: linear-gradient(to right, #e8d5b5, #b3937a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="music-player">
+        <audio id="audio-player"></audio>
+        <div class="now-playing-image">
+            <img id="current-song-image" src="1.jpg" alt="Now Playing">
+        </div>
+        <div id="now-playing">Select a song to play</div>
+        <div class="controls">
+            <button onclick="previousSong()">Previous</button>
+            <button onclick="playPause()" id="play-pause">Play</button>
+            <button onclick="nextSong()">Next</button>
+        </div>
+        <div id="playlist">
+            <h2 class="album-title">Roshni Hits</h2>
+            <div class="song-item" onclick="playSong(0)">
+                <img src="2.jpg" alt="Song 1">
+                <div class="song-info">
+                    <div class="song-title">Tu Chahiye</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(1)">
+                <img src="1.jpg" alt="Song 2">
+                <div class="song-info">
+                    <div class="song-title">Ishq</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(2)">
+                <img src="3.jpg" alt="Song 3">
+                <div class="song-info">
+                    <div class="song-title">Matargashti</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(3)">
+                <img src="4.jpg" alt="Song 4">
+                <div class="song-info">
+                    <div class="song-title">Kaun Tujhe</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(4)">
+                <img src="5.jpg" alt="Song 5">
+                <div class="song-info">
+                    <div class="song-title">Uff</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+
+            <h2 class="album-title">Pratik Anthems</h2>
+            <div class="song-item" onclick="playSong(5)">
+                <img src="6.jpg" alt="Song 6">
+                <div class="song-info">
+                    <div class="song-title">Kasturi</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(6)">
+                <img src="7.jpg" alt="Song 7">
+                <div class="song-info">
+                    <div class="song-title">Tera Mera Hai Pyar Amar</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(7)">
+                <img src="8.jpg" alt="Song 8">
+                <div class="song-info">
+                    <div class="song-title">Khairiyat</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(8)">
+                <img src="9.jpg" alt="Song 9">
+                <div class="song-info">
+                    <div class="song-title">Phele Bhi Mai</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(9)">
+                <img src="10.jpg" alt="Song 10">
+                <div class="song-info">
+                    <div class="song-title">Malang Sajna</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+
+            <h2 class="album-title">Raj Classics</h2>
+            <div class="song-item" onclick="playSong(10)">
+                <img src="11.jpg" alt="Song 11">
+                <div class="song-info">
+                    <div class="song-title">Subha Hone Na De</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(11)">
+                <img src="12.jpg" alt="Song 12">
+                <div class="song-info">
+                    <div class="song-title">Rang Jo</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(12)">
+                <img src="13.jpg" alt="Song 13">
+                <div class="song-info">
+                    <div class="song-title">Ishq Abu</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(13)">
+                <img src="14.jpg" alt="Song 14">
+                <div class="song-info">
+                    <div class="song-title">Aayi Nai</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(14)">
+                <img src="15.jpg" alt="Song 15">
+                <div class="song-info">
+                    <div class="song-title">Tera Hone Laga Hoon</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+
+            <h2 class="album-title">Himanshu's Collection</h2>
+            <div class="song-item" onclick="playSong(15)">
+                <img src="16.jpg" alt="Song 16">
+                <div class="song-info">
+                    <div class="song-title">Jo Tum Mere</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(16)">
+                <img src="17.jpg" alt="Song 17">
+                <div class="song-info">
+                    <div class="song-title">Tainu Khabar Nahi</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(17)">
+                <img src="18.jpg" alt="Song 18">
+                <div class="song-info">
+                    <div class="song-title">Hookah Bar</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(18)">
+                <img src="19.jpg" alt="Song 19">
+                <div class="song-info">
+                    <div class="song-title">Agar Tum Saath Ho</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(19)">
+                <img src="20.jpg" alt="Song 20">
+                <div class="song-info">
+                    <div class="song-title">Tandav</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+
+            <h2 class="album-title">Samanta Pop</h2>
+            <div class="song-item" onclick="playSong(20)">
+                <img src="21.jpg" alt="Song 21">
+                <div class="song-info">
+                    <div class="song-title">Ve Kamleya</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(21)">
+                <img src="22.jpg" alt="Song 22">
+                <div class="song-info">
+                    <div class="song-title">Tum Se</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(22)">
+                <img src="23.jpg" alt="Song 23">
+                <div class="song-info">
+                    <div class="song-title">Tu Hain Toh</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(23)">
+                <img src="24.jpg" alt="Song 24">
+                <div class="song-info">
+                    <div class="song-title">Naina Da Kya Kasoor</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+            <div class="song-item" onclick="playSong(24)">
+                <img src="25.jpg" alt="Song 25">
+                <div class="song-info">
+                    <div class="song-title">Dildara</div>
+                    <div class="song-artist"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const songs = [
+            'Tu Chahiye.mp3', 'ishq.mp3', 'MATARGASHTI.mp3', 'KAUN TUJHE.mp3', 'uff.mp3',
+            'Kasturi.mp3', 'Tera Mera Hai Pyar Amar.mp3', 'KHAIRIYAT.mp3', 'ANIMALPHEHLE BHI MAIN.mp3', 'Malang Sajna.mp3',
+            'Subha Hone Na De.mp3', 'Rang Jo.mp3', 'ishq abu.mp3', 'Aayi Nai.mp3', 'Tera Hone Laga Hoon.mp3',
+            'jo tum mere.mp3', 'Tainu Khabar Nahi.mp3', 'Hookah Bar.mp3', 'Agar Tum Saath Ho.mp3', 'tandav.mp3',
+            'Ve Kamleya.mp3', 'Tum Se.mp3', 'Tu Hain Toh.mp3', 'Naina Da Kya Kasoor.mp3', 'Dildara.mp3'
+        ];
+        
+        let currentSong = 0;
+        let isPlaying = false;
+        const audio = document.getElementById('audio-player');
+        const playPauseButton = document.getElementById('play-pause');
+        const nowPlaying = document.getElementById('now-playing');
+        const currentSongImage = document.getElementById('current-song-image');
+
+        function playSong(index) {
+            currentSong = index;
+            audio.src = songs[currentSong];
+            audio.play();
+            isPlaying = true;
+            playPauseButton.textContent = 'Pause';
+            const songElements = document.querySelectorAll('.song-item');
+            const selectedSong = songElements[currentSong];
+            const songTitle = selectedSong.querySelector('.song-title').textContent;
+            const songArtist = selectedSong.querySelector('.song-artist').textContent;
+            const songImage = selectedSong.querySelector('img').src;
+            currentSongImage.src = songImage;
+            nowPlaying.textContent = `Playing: ${songTitle} - ${songArtist}`;
+        }
+
+        function playPause() {
+            if (audio.src) {
+                if (isPlaying) {
+                    audio.pause();
+                    playPauseButton.textContent = 'Play';
+                } else {
+                    audio.play();
+                    playPauseButton.textContent = 'Pause';
+                }
+                isPlaying = !isPlaying;
+            }
+        }
+
+        function nextSong() {
+            currentSong = (currentSong + 1) % songs.length;
+            playSong(currentSong);
+        }
+
+        function previousSong() {
+            currentSong = (currentSong - 1 + songs.length) % songs.length;
+            playSong(currentSong);
+        }
+
+        audio.addEventListener('ended', () => {
+            nextSong();
+        });
+    </script>
+</body>
+</html>
